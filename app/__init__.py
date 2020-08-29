@@ -28,7 +28,7 @@ def create_app(config_name):
     app = Flask(__name__)
 
     # 根据配置模式的名字获取配置参数的类
-    config_class = config_map(config_name)
+    config_class = config_map[config_name]
     app.config.from_object(config_class)
 
     # 使用app初始化db
@@ -38,12 +38,6 @@ def create_app(config_name):
     global redis_store
     redis_store = redis.StrictRedis(host=config_class.REDIS_HOST, port=config_class.REDIS_PORT)
 
-    # 利用flask-session，将session数据保存到redis中
-    # Session 修改了app中session中的设置
-    Session(app)
-
-    # 为flask补充csrf防护
-    CSRFProtect(app)
     # 注册蓝图
     register_blueprints(app)
     return app

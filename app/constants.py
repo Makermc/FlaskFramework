@@ -15,3 +15,6 @@ LOGIN_ERROR_MAX_TIMES = 5
 
 # 登录错误限制的时间, 单位：秒
 LOGIN_ERROR_FORBID_TIME = 600
+
+# token的redis有效期, 单位：秒
+TOKEN_CODE_REDIS_EXPIRES = 1200
