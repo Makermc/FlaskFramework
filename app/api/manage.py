@@ -3,9 +3,10 @@
 # @TIME  :2020/8/29 12:32
 # @Author:Michael.ma
 from . import api
-from flask import request, jsonify, current_app
+from flask import request, jsonify, current_app, g
 from app import redis_store, db, constants
 from app.utils.response_code import RET
+from app.utils.common import create_access_token, login_required
 from app.models.manage import User
 from sqlalchemy.exc import IntegrityError
 
@@ -21,6 +22,7 @@ def register():
     password = req_dict.get("password")
     name = req_dict.get("name")
     org_id = req_dict.get("org_id")
+    user_ip = request.remote_addr
     # 校验参数
     if not all([account, password, name, org_id]):
         return jsonify(errno=RET.PARAMERR, errmsg="参数不完整")
@@ -46,12 +48,6 @@ def register():
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(error=RET.DBERR, errmsg="查询数据库异常")
-    # 将token与账号保存到redis中,设置有效期
-    try:
-        redis_store.setex("token_%s" % account, constants.TOKEN_CODE_REDIS_EXPIRES, "token")
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="保存token失败")
     # 返回结果
     return jsonify(errno=RET.OK, errmsg="注册成功")
 
@@ -71,10 +67,8 @@ def login():
     # 判断错误次数是否超过限制，如果超过限制，则返回
     # redis记录："access_nums_请求的ip": 次数
     user_ip = request.remote_addr
-    print(user_ip)
     try:
         access_nums = redis_store.get("access_nums_%s" % user_ip)
-        print(access_nums)
     except Exception as e:
         current_app.logger.error(e)
     else:
@@ -104,10 +98,35 @@ def login():
             current_app.logger.error(e)
         return jsonify(errno=RET.DATAERR, errmsg="用户名或密码错误")
 
+    access_token = create_access_token(account, user_ip).decode('utf-8')
     # 将token与账号保存到redis中,设置有效期
     try:
-        redis_store.setex("token_%s" % account, constants.TOKEN_CODE_REDIS_EXPIRES, "token")
+        redis_store.setex("token_%s" % account, constants.TOKEN_CODE_REDIS_EXPIRES, access_token)
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="保存token失败")
-    return jsonify(errno=RET.OK, errmsg="登录成功", token="token")
+    # 更新登录时间
+    return jsonify(errno=RET.OK, errmsg="登录成功", access_token=access_token)
+
+
+@api.route("/token", methods=["DELETE"])
+@login_required
+def logout():
+    # 删除redis中的token
+    try:
+        redis_store.delete("sms_code_%s" % g.account)
+    except Exception as e:
+        current_app.logger.error(e)
+
+
+@api.route("/user", methods=["GET"])
+@login_required
+def test():
+    try:
+        user = User.query.filter_by(account=g.account).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="获取用户信息失败")
+    if user is None:
+        return jsonify(errno=RET.NODATA, errmsg="无效操作")
+    return jsonify(errno=RET.OK, errmsg="OK", data=user.to_dict())

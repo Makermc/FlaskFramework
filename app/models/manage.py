@@ -8,13 +8,6 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-class BaseModel(object):
-    """模型基类，为模型补充创建时间与更新时间"""
-
-    create_time = db.Column(db.DateTime, default=datetime.now)  # 记录的创建时间
-    update_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)  # 记录的更新时间
-
-
 class Organization(db.Model):
     """机构表"""
 
@@ -36,7 +29,7 @@ class Organization(db.Model):
         return org_dict
 
 
-class User(BaseModel, db.Model):
+class User(db.Model):
     """用户表
        继承基类，记录注册时间以及最后登录时间
     """
@@ -44,10 +37,11 @@ class User(BaseModel, db.Model):
     __tablename__ = "tb_user"
 
     id = db.Column(db.Integer, primary_key=True)
-    account = db.Column(db.String(32), unique=True, nullable=False)
+    account = db.Column(db.String(32),  unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     name = db.Column(db.String(32), nullable=False)
     login_ip = db.Column(db.String(32))
+    login_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     org_id = db.Column(db.Integer, db.ForeignKey("tb_organization.id"), nullable=False)
 
     # 加上property装饰器后，会把函数变为属性，属性名即为函数名
@@ -81,6 +75,6 @@ class User(BaseModel, db.Model):
             "account": self.account,
             "name": self.name,
             "login_ip": self.login_ip,
-            "update_time": self.update_time.strftime("%Y-%m-%d %H:%M:%S")
+            "login_time": self.login_time.strftime("%Y-%m-%d %H:%M:%S")
         }
         return user_dict

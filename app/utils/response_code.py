@@ -12,6 +12,7 @@ class RET:
     USERERR             = "4104"
     ROLEERR             = "4105"
     PWDERR              = "4106"
+    TOKENERR            = "4107"
     REQERR              = "4201"
     IPERR               = "4202"
     THIRDERR            = "4301"
