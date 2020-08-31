@@ -8,6 +8,17 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
+class Menu(db.Model):
+    """菜单表"""
+
+    __tablename__ = "tb_menu"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), nullable=False)
+    url = db.Column(db.String(128), nullable=False)
+    pid = db.Column(db.Integer)
+
+
 class Organization(db.Model):
     """机构表"""
 
@@ -15,7 +26,6 @@ class Organization(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True, nullable=False)
-    description = db.Column(db.String(256))
     pid = db.Column(db.Integer)
 
     def to_dict(self):
@@ -23,10 +33,33 @@ class Organization(db.Model):
         org_dict = {
             "org_id": self.id,
             "name": self.name,
-            "description": self.description,
             "pid": self.pid
         }
         return org_dict
+
+
+role_menu = db.Table(
+    "tb_role_menu",
+    db.Column("role_id", db.Integer, db.ForeignKey("tb_role.id"), primary_key=True),
+    db.Column("menu_id", db.Integer, db.ForeignKey("tb_menu.id"), primary_key=True),
+)
+
+
+class Role(db.Model):
+    """角色表"""
+
+    __tablename__ = "tb_role"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(32), nullable=False)
+    org_id = db.Column(db.Integer, db.ForeignKey("tb_organization.id"), nullable=False)
+
+
+role_user = db.Table(
+    "tb_role_user",
+    db.Column("role_id", db.Integer, db.ForeignKey("tb_role.id"), primary_key=True),
+    db.Column("user_id", db.Integer, db.ForeignKey("tb_user.id"), primary_key=True),
+)
 
 
 class User(db.Model):
@@ -37,7 +70,7 @@ class User(db.Model):
     __tablename__ = "tb_user"
 
     id = db.Column(db.Integer, primary_key=True)
-    account = db.Column(db.String(32),  unique=True, nullable=False)
+    account = db.Column(db.String(32), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     name = db.Column(db.String(32), nullable=False)
     login_ip = db.Column(db.String(32))
