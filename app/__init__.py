@@ -52,6 +52,7 @@ def register_extensions(app):
     db.init_app(app)
 
 
+
 def register_blueprints(app):
     """
     加载功能模块。并注册蓝图

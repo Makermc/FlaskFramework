@@ -16,6 +16,8 @@ class Menu(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False)
     url = db.Column(db.String(128), nullable=False)
+    icon = db.Column(db.String(32))
+    visible = db.Column(db.BOOLEAN)
     pid = db.Column(db.Integer)
 
 
@@ -55,11 +57,11 @@ class Role(db.Model):
     org_id = db.Column(db.Integer, db.ForeignKey("tb_organization.id"), nullable=False)
 
 
-role_user = db.Table(
-    "tb_role_user",
-    db.Column("role_id", db.Integer, db.ForeignKey("tb_role.id"), primary_key=True),
-    db.Column("user_id", db.Integer, db.ForeignKey("tb_user.id"), primary_key=True),
-)
+# role_user = db.Table(
+#     "tb_role_user",
+#     db.Column("role_id", db.Integer, db.ForeignKey("tb_role.id"), primary_key=True),
+#     db.Column("user_id", db.Integer, db.ForeignKey("tb_user.id"), primary_key=True),
+# )
 
 
 class User(db.Model):
@@ -76,6 +78,7 @@ class User(db.Model):
     login_ip = db.Column(db.String(32))
     login_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     org_id = db.Column(db.Integer, db.ForeignKey("tb_organization.id"), nullable=False)
+    role_id = db.Column(db.Integer, db.ForeignKey("tb_role.id"), nullable=False)
 
     # 加上property装饰器后，会把函数变为属性，属性名即为函数名
     @property
